@@ -33,6 +33,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useUserStore } from '@/stores/user'
+import { userApi } from '@/api'
 
 const userStore = useUserStore()
 const agreed = ref(false)
@@ -43,44 +44,53 @@ const wxLogin = async () => {
     uni.showToast({ title: '请先同意用户协议', icon: 'none' })
     return
   }
-  
+
   loading.value = true
-  
+
   try {
     // 获取微信登录凭证
     const [loginErr, loginRes] = await uni.login({ provider: 'weixin' })
-    
+
     if (loginErr) {
       throw new Error('微信登录失败')
     }
-    
+
     // 获取用户信息
     const [profileErr, profileRes] = await uni.getUserProfile({
       desc: '用于完善用户资料'
     })
-    
+
     if (profileErr) {
       throw new Error('获取用户信息失败')
     }
-    
+
     const { code } = loginRes
     const { userInfo } = profileRes
-    
+
     // 调用登录接口
-    await userStore.wxLogin({
-      code,
-      nickname: userInfo.nickName,
-      avatar: userInfo.avatarUrl,
-      gender: userInfo.gender
-    })
-    
-    uni.showToast({ title: '登录成功', icon: 'success' })
-    
-    // 跳转到首页
-    setTimeout(() => {
-      uni.switchTab({ url: '/pages/home/index' })
-    }, 1500)
-    
+    const res = await userApi.wxLogin(code)
+
+    if (res.code === 200) {
+      // 保存token
+      uni.setStorageSync('token', res.data.token)
+      // 保存用户信息
+      userStore.setUserInfo({
+        userId: res.data.userId,
+        nickname: userInfo.nickName,
+        avatar: userInfo.avatarUrl,
+        gender: userInfo.gender
+      })
+
+      uni.showToast({ title: '登录成功', icon: 'success' })
+
+      // 跳转到首页
+      setTimeout(() => {
+        uni.switchTab({ url: '/pages/home/index' })
+      }, 1500)
+    } else {
+      throw new Error(res.message || '登录失败')
+    }
+
   } catch (error) {
     uni.showToast({ title: error.message || '登录失败', icon: 'none' })
   } finally {

@@ -26,22 +26,10 @@ export const useUserStore = defineStore('user', () => {
     location.value = { longitude, latitude }
   }
   
-  const wxLogin = async (data) => {
-    // 调用登录API
-    // const res = await api.user.wxLogin(data)
-    // setToken(res.token)
-    // setUserInfo(res.userInfo)
-    
-    // 模拟登录
-    setToken('mock_token_' + Date.now())
-    setUserInfo({
-      userId: 1,
-      nickname: data.nickname,
-      avatar: data.avatar,
-      gender: data.gender,
-      level: 1,
-      creditScore: 100
-    })
+  const wxLogin = async (loginRes) => {
+    // 登录逻辑已在登录页面处理，这里只更新状态
+    setToken(loginRes.token)
+    setUserInfo(loginRes.userInfo)
   }
   
   const logout = () => {

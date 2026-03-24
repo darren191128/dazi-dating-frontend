@@ -61,6 +61,153 @@
       "style": {
         "navigationBarTitleText": "编辑资料"
       }
+    },
+    {
+      "path": "pages/user/published",
+      "style": {
+        "navigationBarTitleText": "我的发布"
+      }
+    },
+    {
+      "path": "pages/user/joined",
+      "style": {
+        "navigationBarTitleText": "我的参与"
+      }
+    },
+    {
+      "path": "pages/user/favorites",
+      "style": {
+        "navigationBarTitleText": "我的收藏"
+      }
+    },
+    {
+      "path": "pages/user/verify",
+      "style": {
+        "navigationBarTitleText": "实名认证"
+      }
+    },
+    {
+      "path": "pages/user/settings",
+      "style": {
+        "navigationBarTitleText": "设置"
+      }
+    },
+    {
+      "path": "pages/user/about",
+      "style": {
+        "navigationBarTitleText": "关于我们"
+      }
+    },
+    {
+      "path": "pages/user/followings",
+      "style": {
+        "navigationBarTitleText": "我的关注"
+      }
+    },
+    {
+      "path": "pages/user/followers",
+      "style": {
+        "navigationBarTitleText": "我的粉丝"
+      }
+    },
+    {
+      "path": "pages/user/visitors",
+      "style": {
+        "navigationBarTitleText": "访客记录"
+      }
+    },
+    {
+      "path": "pages/moment/index",
+      "style": {
+        "navigationBarTitleText": "动态广场",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
+      "path": "pages/moment/publish",
+      "style": {
+        "navigationBarTitleText": "发布动态"
+      }
+    },
+    {
+      "path": "pages/moment/detail",
+      "style": {
+        "navigationBarTitleText": "动态详情"
+      }
+    },
+    {
+      "path": "pages/match/success",
+      "style": {
+        "navigationBarTitleText": "匹配成功"
+      }
+    },
+    {
+      "path": "pages/vip/index",
+      "style": {
+        "navigationBarTitleText": "VIP中心",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/vip/packages",
+      "style": {
+        "navigationBarTitleText": "选择套餐"
+      }
+    },
+    {
+      "path": "pages/wallet/index",
+      "style": {
+        "navigationBarTitleText": "我的钱包"
+      }
+    },
+    {
+      "path": "pages/wallet/recharge",
+      "style": {
+        "navigationBarTitleText": "充值"
+      }
+    },
+    {
+      "path": "pages/wallet/transactions",
+      "style": {
+        "navigationBarTitleText": "交易记录"
+      }
+    },
+    {
+      "path": "pages/call/index",
+      "style": {
+        "navigationBarTitleText": "通话中",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/message/group-create",
+      "style": {
+        "navigationBarTitleText": "创建群聊"
+      }
+    },
+    {
+      "path": "pages/message/group-detail",
+      "style": {
+        "navigationBarTitleText": "群详情"
+      }
+    },
+    {
+      "path": "pages/message/group-chat",
+      "style": {
+        "navigationBarTitleText": "群聊"
+      }
+    },
+    {
+      "path": "pages/topic/index",
+      "style": {
+        "navigationBarTitleText": "话题广场"
+      }
+    },
+    {
+      "path": "pages/topic/detail",
+      "style": {
+        "navigationBarTitleText": "话题详情"
+      }
     }
   ],
   "globalStyle": {

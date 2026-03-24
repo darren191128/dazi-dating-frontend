@@ -36,20 +36,23 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { activityApi } from '@/api'
 import ActivityCard from '@/components/ActivityCard.vue'
 
 const currentType = ref(0)
 const refreshing = ref(false)
 const loadStatus = ref('loadmore')
 const activityList = ref([])
+const page = ref(1)
+const pageSize = ref(10)
 
 const typeList = [
-  { name: '全部' },
-  { name: '吃喝玩乐' },
-  { name: '户外游玩' },
-  { name: '亲子活动' },
-  { name: '户外运动' },
-  { name: '相亲交友' }
+  { name: '全部', code: '' },
+  { name: '吃喝玩乐', code: 'dining' },
+  { name: '户外游玩', code: 'outdoor' },
+  { name: '亲子活动', code: 'family' },
+  { name: '户外运动', code: 'sports' },
+  { name: '相亲交友', code: 'dating' }
 ]
 
 onMounted(() => {
@@ -58,53 +61,45 @@ onMounted(() => {
 
 const onTypeChange = (index) => {
   currentType.value = index
+  page.value = 1
+  activityList.value = []
   loadActivities()
 }
 
 const loadActivities = async () => {
-  // 调用API获取活动列表
-  // activityList.value = await api.activity.getList({ type: currentType.value })
-  
-  // 模拟数据
-  activityList.value = [
-    {
-      id: 1,
-      title: '周末聚餐，AA制',
-      typeName: '吃喝玩乐',
-      location: '朝阳区三里屯',
-      startTime: '2024-03-25 18:00',
-      currentParticipants: 3,
-      maxParticipants: 8,
-      paymentType: 1,
-      perPersonAmount: 150,
-      coverImage: '/static/activity1.jpg'
-    },
-    {
-      id: 2,
-      title: '羽毛球约起来',
-      typeName: '户外运动',
-      location: '朝阳区奥体中心',
-      startTime: '2024-03-26 14:00',
-      currentParticipants: 2,
-      maxParticipants: 6,
-      paymentType: 1,
-      perPersonAmount: 50,
-      coverImage: '/static/activity2.jpg'
+  try {
+    loadStatus.value = 'loading'
+    const typeCode = typeList[currentType.value].code
+    const res = await activityApi.getActivityList({
+      type: typeCode,
+      page: page.value,
+      pageSize: pageSize.value
+    })
+    if (res.code === 200) {
+      if (page.value === 1) {
+        activityList.value = res.data.list || []
+      } else {
+        activityList.value = [...activityList.value, ...(res.data.list || [])]
+      }
+      loadStatus.value = res.data.list?.length < pageSize.value ? 'nomore' : 'loadmore'
     }
-  ]
+  } catch (error) {
+    console.error('加载活动列表失败:', error)
+    loadStatus.value = 'loadmore'
+  }
 }
 
 const onRefresh = async () => {
   refreshing.value = true
+  page.value = 1
   await loadActivities()
   refreshing.value = false
 }
 
 const loadMore = () => {
-  loadStatus.value = 'loading'
-  setTimeout(() => {
-    loadStatus.value = 'nomore'
-  }, 1000)
+  if (loadStatus.value === 'nomore') return
+  page.value++
+  loadActivities()
 }
 
 const goToDetail = (id) => {

@@ -17,6 +17,26 @@
       <u-icon name="arrow-right" size="14" color="#999" />
     </view>
     
+    <!-- 每日精选 -->
+    <view class="daily-picks-section" v-if="dailyPicks.length > 0">
+      <view class="section-header">
+        <text class="section-title">每日精选</text>
+        <text class="section-more" @click="goToMatch">查看更多</text>
+      </view>
+      <scroll-view scroll-x class="daily-picks-scroll" show-scrollbar="false">
+        <view class="daily-picks-list">
+          <DailyPickCard 
+            v-for="user in dailyPicks" 
+            :key="user.userId"
+            :user="user"
+            @click="goToUserDetail(user.userId)"
+            @like="handleLike(user)"
+            @viewDetail="goToUserDetail(user.userId)"
+          />
+        </view>
+      </scroll-view>
+    </view>
+    
     <!-- Tab切换 -->
     <u-tabs 
       :list="tabList" 
@@ -61,7 +81,9 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useUserStore } from '@/stores/user'
+import { matchApi } from '@/api'
 import UserCard from '@/components/UserCard.vue'
+import DailyPickCard from '@/components/DailyPickCard.vue'
 
 const userStore = useUserStore()
 
@@ -70,6 +92,8 @@ const currentTab = ref(0)
 const currentLocation = ref('')
 const refreshing = ref(false)
 const loadStatus = ref('loadmore')
+const page = ref(1)
+const pageSize = ref(10)
 
 const tabList = [
   { name: '附近的人' },
@@ -78,10 +102,12 @@ const tabList = [
 
 const nearbyUsers = ref([])
 const recommendUsers = ref([])
+const dailyPicks = ref([])
 
 onMounted(() => {
   getLocation()
   loadNearbyUsers()
+  loadDailyPicks()
 })
 
 const getLocation = () => {
@@ -110,21 +136,59 @@ const chooseLocation = () => {
 
 const onTabChange = (index) => {
   currentTab.value = index
+  page.value = 1
   if (index === 0) {
+    nearbyUsers.value = []
     loadNearbyUsers()
   } else {
+    recommendUsers.value = []
     loadRecommendUsers()
   }
 }
 
 const loadNearbyUsers = async () => {
-  // 调用API获取附近的人
-  // nearbyUsers.value = await api.match.getNearbyUsers(...)
+  try {
+    loadStatus.value = 'loading'
+    const { longitude, latitude } = userStore.location || { longitude: 116.4074, latitude: 39.9042 }
+    const res = await matchApi.getNearbyUsers({
+      longitude,
+      latitude,
+      page: page.value,
+      pageSize: pageSize.value
+    })
+    if (res.code === 200) {
+      if (page.value === 1) {
+        nearbyUsers.value = res.data.list || []
+      } else {
+        nearbyUsers.value = [...nearbyUsers.value, ...(res.data.list || [])]
+      }
+      loadStatus.value = res.data.list?.length < pageSize.value ? 'nomore' : 'loadmore'
+    }
+  } catch (error) {
+    console.error('加载附近用户失败:', error)
+    loadStatus.value = 'loadmore'
+  }
 }
 
 const loadRecommendUsers = async () => {
-  // 调用API获取推荐匹配
-  // recommendUsers.value = await api.match.getRecommendations(...)
+  try {
+    loadStatus.value = 'loading'
+    const res = await matchApi.getRecommendations({
+      page: page.value,
+      pageSize: pageSize.value
+    })
+    if (res.code === 200) {
+      if (page.value === 1) {
+        recommendUsers.value = res.data.list || []
+      } else {
+        recommendUsers.value = [...recommendUsers.value, ...(res.data.list || [])]
+      }
+      loadStatus.value = res.data.list?.length < pageSize.value ? 'nomore' : 'loadmore'
+    }
+  } catch (error) {
+    console.error('加载推荐用户失败:', error)
+    loadStatus.value = 'loadmore'
+  }
 }
 
 const onSearch = () => {
@@ -135,6 +199,7 @@ const onSearch = () => {
 
 const onRefresh = async () => {
   refreshing.value = true
+  page.value = 1
   if (currentTab.value === 0) {
     await loadNearbyUsers()
   } else {
@@ -144,15 +209,43 @@ const onRefresh = async () => {
 }
 
 const loadMore = () => {
-  loadStatus.value = 'loading'
-  // 加载更多数据
-  setTimeout(() => {
-    loadStatus.value = 'nomore'
-  }, 1000)
+  if (loadStatus.value === 'nomore') return
+  page.value++
+  if (currentTab.value === 0) {
+    loadNearbyUsers()
+  } else {
+    loadRecommendUsers()
+  }
 }
 
 const goToUserDetail = (userId) => {
   uni.navigateTo({ url: `/pages/user/detail?userId=${userId}` })
+}
+
+const loadDailyPicks = async () => {
+  try {
+    const res = await matchApi.getDailyPicks({ limit: 10 })
+    if (res.code === 200) {
+      dailyPicks.value = res.data || []
+    }
+  } catch (error) {
+    console.error('加载每日精选失败:', error)
+  }
+}
+
+const handleLike = async (user) => {
+  try {
+    const res = await matchApi.like(user.userId)
+    if (res.code === 200) {
+      uni.showToast({ title: '已喜欢', icon: 'success' })
+    }
+  } catch (error) {
+    console.error('喜欢失败:', error)
+  }
+}
+
+const goToMatch = () => {
+  uni.switchTab({ url: '/pages/match/index' })
 }
 </script>
 
@@ -185,5 +278,40 @@ const goToUserDetail = (userId) => {
 .user-list {
   height: calc(100vh - 200rpx);
   padding: 20rpx;
+}
+
+.daily-picks-section {
+  background: #fff;
+  padding: 30rpx 0;
+  margin-bottom: 20rpx;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 30rpx;
+  margin-bottom: 20rpx;
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.section-more {
+  font-size: 26rpx;
+  color: #007AFF;
+}
+
+.daily-picks-scroll {
+  white-space: nowrap;
+}
+
+.daily-picks-list {
+  display: flex;
+  gap: 20rpx;
+  padding: 0 30rpx;
 }
 </style>

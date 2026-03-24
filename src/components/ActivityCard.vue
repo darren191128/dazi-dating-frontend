@@ -35,32 +35,67 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
+import { formatDate } from '@/utils/index.js'
+
+/**
+ * ActivityCard 活动卡片组件
+ * 用于展示活动信息的卡片组件
+ * @component
+ */
 const props = defineProps({
+  /**
+   * 活动信息对象
+   * @type {Object}
+   * @property {number} id - 活动ID
+   * @property {string} title - 活动标题
+   * @property {string} typeName - 活动类型名称
+   * @property {string} [coverImage] - 封面图片
+   * @property {string} startTime - 开始时间
+   * @property {string} location - 活动地点
+   * @property {number} currentParticipants - 当前参与人数
+   * @property {number} maxParticipants - 最大参与人数
+   * @property {number} paymentType - 支付方式
+   * @property {number} [perPersonAmount] - 人均费用
+   */
   activity: {
     type: Object,
     required: true
   }
 })
 
-const emit = defineEmits(['click'])
+const emit = defineEmits(['click', 'join'])
 
+/**
+ * 支付方式文本映射
+ * @type {ComputedRef<string>}
+ */
 const paymentTypeText = computed(() => {
   const types = { 1: 'AA制', 2: '男A女免', 3: '请客', 4: '免费' }
   return types[props.activity.paymentType] || 'AA制'
 })
 
+/**
+ * 格式化活动时间
+ * @param {string} time - ISO格式时间字符串
+ * @returns {string} 格式化后的时间
+ */
 const formatTime = (time) => {
   if (!time) return ''
-  return time.replace('T', ' ').substring(0, 16)
+  return formatDate(time, 'MM-DD HH:mm')
 }
 
+/**
+ * 报名活动
+ * 显示确认对话框，确认后触发join事件
+ */
 const join = () => {
   uni.showModal({
     title: '确认报名',
     content: `确定要报名参加"${props.activity.title}"吗？`,
     success: (res) => {
       if (res.confirm) {
-        uni.showToast({ title: '报名成功', icon: 'success' })
+        emit('join', props.activity)
       }
     }
   })

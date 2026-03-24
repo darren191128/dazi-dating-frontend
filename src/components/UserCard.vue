@@ -35,11 +35,33 @@
 </template>
 
 <script setup>
+import { formatDistance } from '@/utils/index.js'
+
+/**
+ * UserCard 用户卡片组件
+ * 用于展示用户列表中的用户信息
+ * @component
+ */
 const props = defineProps({
+  /**
+   * 用户信息对象
+   * @type {Object}
+   * @property {number} userId - 用户ID
+   * @property {string} nickname - 用户昵称
+   * @property {number} age - 年龄
+   * @property {number} gender - 性别：1-男，2-女
+   * @property {string} [avatar] - 头像URL
+   * @property {number} [distance] - 距离（公里）
+   * @property {string[]} [interests] - 兴趣标签
+   * @property {number} [matchScore] - 匹配分数
+   */
   user: {
     type: Object,
     required: true
   },
+  /**
+   * 是否显示匹配分数
+   */
   showMatchScore: {
     type: Boolean,
     default: false
@@ -48,16 +70,13 @@ const props = defineProps({
 
 const emit = defineEmits(['click'])
 
-const formatDistance = (distance) => {
-  if (distance < 1) {
-    return Math.round(distance * 1000) + 'm'
-  }
-  return Math.round(distance * 10) / 10 + 'km'
-}
-
+/**
+ * 打招呼
+ * 跳转到聊天页面
+ */
 const sayHello = () => {
   uni.navigateTo({
-    url: `/pages/message/chat?userId=${props.user.userId}&nickname=${props.user.nickname}`
+    url: `/pages/message/chat?userId=${props.user.userId}&nickname=${encodeURIComponent(props.user.nickname)}`
   })
 }
 </script>

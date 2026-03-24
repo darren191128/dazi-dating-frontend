@@ -33,6 +33,12 @@
       </view>
       
       <view v-else-if="currentTab === 1">
+        <!-- 创建群聊按钮 -->
+        <view class="create-group-btn" @click="createGroup">
+          <u-icon name="plus-circle" size="32" color="#007AFF" />
+          <text>创建群聊</text>
+        </view>
+        
         <!-- 群聊列表 -->
         <view 
           class="message-item" 
@@ -76,7 +82,9 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { messageApi } from '@/api'
+import { groupApi } from '@/api/rtc-group'
 
 const currentTab = ref(0)
 
@@ -86,36 +94,8 @@ const tabList = [
   { name: '系统' }
 ]
 
-const privateChats = ref([
-  {
-    id: 1,
-    name: '小明',
-    avatar: '/static/avatar1.jpg',
-    lastMessage: '周末一起去打球吗？',
-    lastTime: '10:30',
-    unread: 2
-  },
-  {
-    id: 2,
-    name: '小红',
-    avatar: '/static/avatar2.jpg',
-    lastMessage: '好的，到时候见',
-    lastTime: '昨天',
-    unread: 0
-  }
-])
-
-const groupChats = ref([
-  {
-    id: 1,
-    name: '周末聚餐群',
-    cover: '/static/group1.jpg',
-    lastMessage: '张三：我已经到了',
-    lastTime: '09:00',
-    unread: 5
-  }
-])
-
+const privateChats = ref([])
+const groupChats = ref([])
 const systemMessages = ref([
   {
     id: 1,
@@ -131,8 +111,75 @@ const systemMessages = ref([
   }
 ])
 
+onMounted(() => {
+  loadPrivateChats()
+  loadGroupChats()
+})
+
+// 加载私聊列表
+const loadPrivateChats = async () => {
+  try {
+    const res = await messageApi.getConversations()
+    if (res.code === 200 && res.data) {
+      privateChats.value = res.data.map(chat => ({
+        id: chat.targetUserId,
+        name: chat.targetNickname,
+        avatar: chat.targetAvatar || '/static/default-avatar.png',
+        lastMessage: chat.lastMessage,
+        lastTime: formatTime(chat.lastTime),
+        unread: chat.unreadCount || 0
+      }))
+    }
+  } catch (error) {
+    console.error('加载私聊列表失败:', error)
+  }
+}
+
+// 加载群聊列表
+const loadGroupChats = async () => {
+  try {
+    const res = await groupApi.getGroups()
+    if (res.code === 200 && res.data) {
+      groupChats.value = res.data.map(group => ({
+        id: group.id,
+        name: group.name,
+        cover: group.avatar || '/static/default-group.png',
+        lastMessage: group.lastMessage || '',
+        lastTime: formatTime(group.lastMessageTime),
+        unread: group.unreadCount || 0
+      }))
+    }
+  } catch (error) {
+    console.error('加载群聊列表失败:', error)
+  }
+}
+
+// 格式化时间
+const formatTime = (time) => {
+  if (!time) return ''
+  const date = new Date(time)
+  const now = new Date()
+  const diff = now - date
+  
+  // 今天
+  if (diff < 24 * 60 * 60 * 1000 && date.getDate() === now.getDate()) {
+    return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+  }
+  // 昨天
+  if (diff < 48 * 60 * 60 * 1000 && date.getDate() === now.getDate() - 1) {
+    return '昨天'
+  }
+  // 更早
+  return date.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' })
+}
+
 const onTabChange = (index) => {
   currentTab.value = index
+  if (index === 0) {
+    loadPrivateChats()
+  } else if (index === 1) {
+    loadGroupChats()
+  }
 }
 
 const goToChat = (chat) => {
@@ -143,7 +190,14 @@ const goToChat = (chat) => {
 
 const goToGroupChat = (group) => {
   uni.navigateTo({
-    url: `/pages/message/groupChat?groupId=${group.id}&name=${group.name}`
+    url: `/pages/message/group-chat?groupId=${group.id}&name=${group.name}`
+  })
+}
+
+// 创建群聊
+const createGroup = () => {
+  uni.navigateTo({
+    url: '/pages/message/group-create'
   })
 }
 </script>
@@ -237,5 +291,20 @@ const goToGroupChat = (group) => {
   font-size: 28rpx;
   color: #666;
   margin-bottom: 8rpx;
+}
+
+.create-group-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16rpx;
+  padding: 30rpx;
+  background: #fff;
+  border-bottom: 1rpx solid #eee;
+}
+
+.create-group-btn text {
+  font-size: 30rpx;
+  color: #007AFF;
 }
 </style>
